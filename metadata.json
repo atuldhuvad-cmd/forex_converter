@@ -1,0 +1,6 @@
+{
+  "name": "Forex Expense & Currency Converter PWA",
+  "description": "Progressive Web App foreign currency converter and monthly expense tracker with custom purchase exchange rates (CAD Forex Card, CAD Cash, USD Cash), AI-powered PDF card statement parsing, offline capability, and cross-device sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
