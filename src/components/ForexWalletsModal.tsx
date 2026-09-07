@@ -44,8 +44,8 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
     name: '',
     currency: 'EUR',
     type: 'forex_card',
-    purchasedRateINR: 90.50,
-    initialBalance: 1000,
+    purchasedRateINR: 0,
+    initialBalance: 0,
     color: 'from-blue-600 to-indigo-600',
   });
 
@@ -85,7 +85,7 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
   };
 
   const handleQuickAddPreset = (code: string) => {
-    const meta = GLOBAL_CURRENCIES[code] || { name: code, symbol: code, defaultRateINR: 80 };
+    const meta = GLOBAL_CURRENCIES[code] || { name: code, symbol: code, defaultRateINR: 0 };
     const walletName = `${code} Forex Card`;
     const newId = `wallet_${code.toLowerCase()}_${Date.now()}`;
 
@@ -95,7 +95,7 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
       currency: code,
       type: 'forex_card',
       purchasedRateINR: meta.defaultRateINR,
-      initialBalance: 1000,
+      initialBalance: 0,
       color: code === 'EUR' ? 'from-amber-600 to-yellow-700' : code === 'GBP' ? 'from-purple-600 to-indigo-700' : 'from-blue-600 to-cyan-700',
       notes: `${meta.name} instrument added at ₹${meta.defaultRateINR}`,
     };
@@ -129,8 +129,8 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
       name: '',
       currency: 'EUR',
       type: 'forex_card',
-      purchasedRateINR: 90.50,
-      initialBalance: 1000,
+      purchasedRateINR: 0,
+      initialBalance: 0,
     });
   };
 
@@ -140,7 +140,7 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
   };
 
   const handleResetToUserDefaults = () => {
-    if (confirm('Reset to the default purchase rates: CAD Card @ 67.85 INR, CAD Cash @ 68.70 INR, and USD Cash @ 95.80 INR?')) {
+    if (confirm('Remove all configured wallets and return to a blank setup?')) {
       setLocalWallets(DEFAULT_WALLETS);
     }
   };
@@ -350,12 +350,12 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   {[
-                    { code: 'EUR', name: 'Euro (€)', defaultRate: 90.50, symbol: '€' },
-                    { code: 'GBP', name: 'UK Pound (£)', defaultRate: 108.20, symbol: '£' },
-                    { code: 'USD', name: 'US Dollar ($)', defaultRate: 95.80, symbol: '$' },
-                    { code: 'CAD', name: 'Canadian Dollar (C$)', defaultRate: 67.85, symbol: 'C$' },
-                    { code: 'AUD', name: 'Australian Dollar (A$)', defaultRate: 56.40, symbol: 'A$' },
-                    { code: 'SGD', name: 'Singapore Dollar (S$)', defaultRate: 64.80, symbol: 'S$' },
+                    { code: 'EUR', name: 'Euro (€)', symbol: '€' },
+                    { code: 'GBP', name: 'UK Pound (£)', symbol: '£' },
+                    { code: 'USD', name: 'US Dollar ($)', symbol: '$' },
+                    { code: 'CAD', name: 'Canadian Dollar (C$)', symbol: 'C$' },
+                    { code: 'AUD', name: 'Australian Dollar (A$)', symbol: 'A$' },
+                    { code: 'SGD', name: 'Singapore Dollar (S$)', symbol: 'S$' },
                   ].map((preset) => (
                     <button
                       key={preset.code}
@@ -368,7 +368,7 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
                         <span className="font-mono font-extrabold text-blue-400 text-sm">{preset.symbol}</span>
                       </div>
                       <p className="text-[11px] text-slate-400 truncate">{preset.name}</p>
-                      <p className="text-[10px] text-emerald-400 font-mono mt-1">Preset: ₹{preset.defaultRate}/unit</p>
+                      <p className="text-[10px] text-emerald-400 font-mono mt-1">Enter your rate</p>
                     </button>
                   ))}
                 </div>
@@ -486,7 +486,7 @@ export const ForexWalletsModal: React.FC<ForexWalletsModalProps> = ({
             onClick={handleResetToUserDefaults}
             className="text-xs text-slate-400 hover:text-blue-400 underline font-medium"
           >
-            Reset to Default Rates
+            Return to Blank Setup
           </button>
           <div className="flex items-center gap-3">
             <button

@@ -73,7 +73,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   }, [walletId, selectedWallet]);
 
   const parsedAmount = parseFloat(amountStr) || 0;
-  const parsedRate = parseFloat(customRate) || selectedWallet?.purchasedRateINR || 67.85;
+  const parsedRate = parseFloat(customRate) || selectedWallet?.purchasedRateINR || 0;
   const calculatedINR = calculateINR(parsedAmount, parsedRate);
   const isReceipt = txType === 'refund' || txType === 'income';
 

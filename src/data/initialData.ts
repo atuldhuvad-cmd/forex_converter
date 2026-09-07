@@ -1,39 +1,8 @@
 import { ForexWallet, Transaction, ExpenseCategory } from '../types';
 
-export const DEFAULT_WALLETS: ForexWallet[] = [
-  {
-    id: 'cad_forex_card',
-    name: 'CAD Forex Card',
-    currency: 'CAD',
-    type: 'forex_card',
-    purchasedRateINR: 67.85,
-    initialBalance: 3000.0,
-    color: 'from-blue-600 to-indigo-600',
-    notes: 'Bought at market price 67.85 INR/CAD',
-    cardLast4: '4821',
-    isDefault: true,
-  },
-  {
-    id: 'cad_cash',
-    name: 'CAD Cash',
-    currency: 'CAD',
-    type: 'cash',
-    purchasedRateINR: 68.70,
-    initialBalance: 500.0,
-    color: 'from-emerald-600 to-teal-700',
-    notes: 'Bought physical cash at 68.70 INR/CAD',
-  },
-  {
-    id: 'usd_cash',
-    name: 'USD Cash',
-    currency: 'USD',
-    type: 'cash',
-    purchasedRateINR: 95.80,
-    initialBalance: 300.0,
-    color: 'from-amber-600 to-orange-700',
-    notes: 'Bought physical USD at 95.80 INR/USD',
-  },
-];
+// Public builds start empty. Existing users retain wallets from localStorage,
+// and new users enter their own instruments, rates, and opening balances.
+export const DEFAULT_WALLETS: ForexWallet[] = [];
 
 export const CATEGORY_CONFIG: Record<
   ExpenseCategory,

@@ -142,7 +142,7 @@ export default function App() {
     if (existing) return existing;
     return {
       monthKey: selectedMonth,
-      targetBudgetINR: 150000,
+      targetBudgetINR: 0,
     };
   }, [budgets, selectedMonth]);
 
@@ -206,7 +206,7 @@ export default function App() {
       amount: amount,
       currency: currency,
       walletId: walletId,
-      exchangeRate: wallets.find((w) => w.id === walletId)?.purchasedRateINR || 67.85,
+      exchangeRate: wallets.find((w) => w.id === walletId)?.purchasedRateINR || 0,
       amountINR: 0,
       category: 'Food & Dining',
       type: 'expense',
@@ -383,7 +383,7 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-800/90 bg-slate-950 py-6 text-center text-xs text-slate-400">
         <p>
-          Forex Expense & Currency Converter PWA • Cost Basis: CAD Card (67.85) • CAD Cash (68.70) • USD Cash (95.80)
+          Forex Expense & Currency Converter PWA • Your data stays in this browser
         </p>
       </footer>
 

@@ -11,6 +11,7 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 import { ForexWallet, Transaction, MonthlyBudget } from '../types';
 import {
@@ -38,24 +39,49 @@ export const SyncBackupModal: React.FC<SyncBackupModalProps> = ({
   onRestoreData,
 }) => {
   const [syncCodeInput, setSyncCodeInput] = useState('');
+  const [genPassphrase, setGenPassphrase] = useState('');
+  const [importPassphrase, setImportPassphrase] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
-  const currentSyncCode = generateSyncCode(wallets, transactions, budgets);
+  const handleGenerateCode = async () => {
+    setGenError(null);
+    setIsGenerating(true);
+    try {
+      const code = await generateSyncCode(wallets, transactions, budgets, genPassphrase);
+      setGeneratedCode(code);
+    } catch (err: any) {
+      setGenError(err?.message || 'Failed to generate sync code.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(currentSyncCode);
+    if (!generatedCode) return;
+    navigator.clipboard.writeText(generatedCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2500);
   };
 
-  const handleApplySyncCode = () => {
+  const handleApplySyncCode = async () => {
+    setImportError(null);
     if (!syncCodeInput.trim()) {
-      alert('Please paste a valid Sync Code.');
+      setImportError('Please paste a valid Sync Code.');
       return;
     }
+    if (!importPassphrase.trim()) {
+      setImportError('Enter the passphrase used to generate this sync code.');
+      return;
+    }
+    setIsImporting(true);
     try {
-      const payload = decodeSyncCode(syncCodeInput);
+      const payload = await decodeSyncCode(syncCodeInput, importPassphrase);
       if (confirm(`Restore ${payload.transactions.length} transactions and ${payload.wallets.length} wallets? This will merge with or update your current device data.`)) {
         onRestoreData(payload.wallets, payload.transactions, payload.budgets || []);
         setImportStatus('Data successfully synchronized across devices!');
@@ -64,7 +90,9 @@ export const SyncBackupModal: React.FC<SyncBackupModalProps> = ({
         }, 1200);
       }
     } catch (err: any) {
-      alert('Invalid sync code format. Please verify the copied string.');
+      setImportError(err?.message || 'Invalid sync code or passphrase.');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -141,44 +169,83 @@ export const SyncBackupModal: React.FC<SyncBackupModalProps> = ({
             </div>
           </div>
 
-          {/* Method 1: 1-Click Instant Sync Code */}
+          {/* Method 1: Passphrase-Encrypted Sync Code */}
           <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                1-Click Transfer Code
-              </h3>
-              <button
-                onClick={handleCopyCode}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-xs transition flex items-center gap-1.5"
-              >
-                {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedCode ? 'Copied to Clipboard!' : 'Copy Device Code'}
-              </button>
-            </div>
+            <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              Encrypted Transfer Code
+            </h3>
             <p className="text-xs text-slate-400">
-              Copy this encrypted string and paste it into your other device to migrate all card statements, exchange rates, and cash expenses instantly without signing up.
+              Choose a passphrase to AES-256 encrypt a code containing all card statements, exchange rates, and cash expenses. You'll need to enter the same passphrase on the other device to decrypt it.
             </p>
 
-            <div className="pt-2">
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Receive data from another device (Paste code here):
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-slate-300 flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Passphrase (used to encrypt)
               </label>
               <div className="flex gap-2">
                 <input
-                  type="text"
-                  placeholder="Paste sync code here..."
-                  value={syncCodeInput}
-                  onChange={(e) => setSyncCodeInput(e.target.value)}
+                  type="password"
+                  placeholder="Choose a passphrase..."
+                  value={genPassphrase}
+                  onChange={(e) => setGenPassphrase(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
+                <button
+                  onClick={handleGenerateCode}
+                  disabled={isGenerating || !genPassphrase.trim()}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white shrink-0 shadow-xs transition"
+                >
+                  {isGenerating ? 'Encrypting...' : 'Generate Code'}
+                </button>
+              </div>
+              {genError && <p className="text-xs text-red-400">{genError}</p>}
+              {generatedCode && (
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={generatedCode}
+                    className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white truncate"
+                  />
+                  <button
+                    onClick={handleCopyCode}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-700 hover:bg-slate-600 text-white shrink-0 shadow-xs transition flex items-center gap-1.5"
+                  >
+                    {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedCode ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 space-y-2">
+              <label className="block text-xs font-medium text-slate-300">
+                Receive data from another device:
+              </label>
+              <input
+                type="text"
+                placeholder="Paste encrypted sync code here..."
+                value={syncCodeInput}
+                onChange={(e) => setSyncCodeInput(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  placeholder="Enter the passphrase used to encrypt it..."
+                  value={importPassphrase}
+                  onChange={(e) => setImportPassphrase(e.target.value)}
                   className="flex-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs font-mono text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                 />
                 <button
                   onClick={handleApplySyncCode}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shrink-0 shadow-xs transition"
+                  disabled={isImporting}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white shrink-0 shadow-xs transition"
                 >
-                  Import Data
+                  {isImporting ? 'Decrypting...' : 'Import Data'}
                 </button>
               </div>
+              {importError && <p className="text-xs text-red-400">{importError}</p>}
             </div>
           </div>
 

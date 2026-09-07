@@ -230,11 +230,11 @@ export const QuickConverter: React.FC<QuickConverterProps> = ({ wallets, onQuick
           <div className="flex items-center gap-2 text-slate-300">
             <TrendingDown className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>
-              Forex Card Rate (<strong>₹67.85</strong>) vs CAD Cash (<strong>₹68.70</strong>) saves you{' '}
+              Forex Card Rate (<strong>₹{cadCard.purchasedRateINR.toFixed(2)}</strong>) vs CAD Cash (<strong>₹{cadCash.purchasedRateINR.toFixed(2)}</strong>) saves you{' '}
               <strong className="text-emerald-400 font-mono font-bold">{formatINR(cadSavingsINR)}</strong> on {formatForeign(parsedForeign, 'CAD')}.
             </span>
           </div>
-          <span className="text-slate-400 font-mono font-semibold">Diff: ₹0.85/CAD</span>
+          <span className="text-slate-400 font-mono font-semibold">Diff: ₹{Math.abs(cadCash.purchasedRateINR - cadCard.purchasedRateINR).toFixed(2)}/CAD</span>
         </div>
       )}
     </div>

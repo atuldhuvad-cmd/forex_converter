@@ -3,6 +3,8 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
@@ -10,9 +12,43 @@ const app = express();
 // Cloud Run provides the listening port through PORT. Keep 3000 for local use.
 const PORT = Number(process.env.PORT) || 3000;
 
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+);
+
 // High limit for PDF uploads / base64 statement data
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// The build output for the server bundle lives alongside the static client
+// assets in dist/, but it must never be served over HTTP: it contains the
+// full server source (including the Gemini parsing prompt) via its bundle
+// and sourcemap. Block it before the static file middleware below.
+app.use((req, res, next) => {
+  if (req.path === "/server.cjs" || req.path === "/server.cjs.map") {
+    return res.status(404).end();
+  }
+  next();
+});
+
+const parseStatementLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many statement parsing requests. Please try again later." },
+});
 
 // Server-side Gemini AI initialization
 let aiClient: GoogleGenAI | null = null;
@@ -40,7 +76,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 // AI-powered PDF / Image / Text Card Statement Parser Endpoint
-app.post("/api/parse-statement", async (req, res) => {
+app.post("/api/parse-statement", parseStatementLimiter, async (req, res) => {
   try {
     const { fileData, mimeType, fileName, textContent, defaultCurrency } = req.body;
 

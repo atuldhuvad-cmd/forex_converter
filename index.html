@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Forex Expense & Currency Converter PWA</title>
-    <meta name="description" content="PWA foreign currency converter with custom purchase exchange rates (CAD Forex Card @ 67.85 INR, CAD Cash @ 68.70 INR, USD Cash @ 95.80 INR), AI PDF statement parser, offline mode, and desktop sync." />
+    <meta name="description" content="Private-first PWA for tracking foreign-currency wallets, expenses, exchange rates, budgets, offline access, and device-to-device backup." />
     
     <!-- PWA Settings -->
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -24,19 +24,6 @@
   <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen selection:bg-blue-600 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => {
-              console.log('Forex PWA ServiceWorker registered:', reg.scope);
-            })
-            .catch(err => {
-              console.log('Forex PWA ServiceWorker registration failed:', err);
-            });
-        });
-      }
-    </script>
+    <script src="/register-sw.js"></script>
   </body>
 </html>
-

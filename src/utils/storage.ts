@@ -1,5 +1,5 @@
 import { ForexWallet, Transaction, MonthlyBudget } from '../types';
-import { DEFAULT_WALLETS, INITIAL_SAMPLE_TRANSACTIONS } from '../data/initialData';
+import { DEFAULT_WALLETS } from '../data/initialData';
 
 const STORAGE_KEYS = {
   WALLETS: 'forex_pwa_wallets_v1',
@@ -74,12 +74,7 @@ export function loadBudgets(): MonthlyBudget[] {
   } catch (e) {
     console.error('Failed to load budgets:', e);
   }
-  return [
-    {
-      monthKey: new Date().toISOString().slice(0, 7),
-      targetBudgetINR: 150000,
-    },
-  ];
+  return [];
 }
 
 export function saveBudgets(budgets: MonthlyBudget[]): void {
@@ -144,19 +139,26 @@ export function exportTransactionsToCSV(
     'Notes',
   ];
 
+    // Neutralize leading =, +, -, @ (and tab/CR) so spreadsheet apps never
+  // interpret AI-parsed or user-entered text as a formula (CSV injection).
+  const csvSafe = (value: string): string => {
+    const str = value || '';
+    return /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+  };
+
   const rows = transactions.map((t) => [
-    `"${t.date || ''}"`,
-    `"${t.time || ''}"`,
-    `"${(t.description || '').replace(/"/g, '""')}"`,
-    `"${t.category || ''}"`,
-    `"${walletMap.get(t.walletId) || t.walletId}"`,
-    `"${t.currency || ''}"`,
+    `"${csvSafe(t.date || '')}"`,
+    `"${csvSafe(t.time || '')}"`,
+    `"${csvSafe(t.description || '').replace(/"/g, '""')}"`,
+    `"${csvSafe(t.category || '')}"`,
+    `"${csvSafe(walletMap.get(t.walletId) || t.walletId)}"`,
+    `"${csvSafe(t.currency || '')}"`,
     t.amount.toFixed(2),
     t.exchangeRate.toFixed(2),
     t.amountINR.toFixed(2),
-    `"${t.type}"`,
-    `"${t.source}"`,
-    `"${(t.notes || '').replace(/"/g, '""')}"`,
+    `"${csvSafe(t.type)}"`,
+    `"${csvSafe(t.source)}"`,
+    `"${csvSafe(t.notes || '').replace(/"/g, '""')}"`,
   ]);
 
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -171,11 +173,50 @@ export function exportTransactionsToCSV(
   URL.revokeObjectURL(url);
 }
 
-export function generateSyncCode(
+// Sync codes are real AES-256-GCM ciphertext, keyed by a passphrase the user
+// chooses and re-enters on the receiving device (PBKDF2-derived, so nothing
+// about the passphrase itself is stored in the code). Wire format:
+// base64( salt[16] || iv[12] || ciphertext ), prefixed with "v2:".
+const SYNC_CODE_PREFIX = 'v2:';
+const PBKDF2_ITERATIONS = 210_000;
+
+async function deriveSyncKey(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  bytes.forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary);
+}
+
+function base64ToBytes(b64: string): Uint8Array {
+  const binary = atob(b64);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+export async function generateSyncCode(
   wallets: ForexWallet[],
   transactions: Transaction[],
-  budgets: MonthlyBudget[]
-): string {
+  budgets: MonthlyBudget[],
+  passphrase: string
+): Promise<string> {
+  if (!passphrase.trim()) {
+    throw new Error('A passphrase is required to encrypt the sync code.');
+  }
   const payload: ExportDataPayload = {
     version: '1.0',
     exportedAt: new Date().toISOString(),
@@ -183,13 +224,46 @@ export function generateSyncCode(
     transactions,
     budgets,
   };
-  const str = JSON.stringify(payload);
-  return btoa(encodeURIComponent(str));
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveSyncKey(passphrase, salt);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(JSON.stringify(payload))
+  );
+
+  const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
+  combined.set(salt, 0);
+  combined.set(iv, salt.length);
+  combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
+
+  return SYNC_CODE_PREFIX + bytesToBase64(combined);
 }
 
-export function decodeSyncCode(code: string): ExportDataPayload {
-  const jsonStr = decodeURIComponent(atob(code.trim()));
-  const payload = JSON.parse(jsonStr) as ExportDataPayload;
+export async function decodeSyncCode(code: string, passphrase: string): Promise<ExportDataPayload> {
+  const trimmed = code.trim();
+  if (!trimmed.startsWith(SYNC_CODE_PREFIX)) {
+    throw new Error('Invalid or outdated sync code format.');
+  }
+  if (!passphrase.trim()) {
+    throw new Error('Enter the passphrase used to generate this sync code.');
+  }
+
+  const combined = base64ToBytes(trimmed.slice(SYNC_CODE_PREFIX.length));
+  const salt = combined.slice(0, 16);
+  const iv = combined.slice(16, 28);
+  const ciphertext = combined.slice(28);
+
+  const key = await deriveSyncKey(passphrase, salt);
+  let plaintext: ArrayBuffer;
+  try {
+    plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  } catch {
+    throw new Error('Could not decrypt: wrong passphrase or corrupted code.');
+  }
+
+  const payload = JSON.parse(new TextDecoder().decode(plaintext)) as ExportDataPayload;
   if (!payload || !Array.isArray(payload.wallets) || !Array.isArray(payload.transactions)) {
     throw new Error('Invalid backup data format');
   }

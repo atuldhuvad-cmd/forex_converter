@@ -227,7 +227,7 @@ export const PdfStatementUploader: React.FC<PdfStatementUploaderProps> = ({
 
   const handleLoadSampleStatement = () => {
     const sampleStatement = `
-CARD STATEMENT - CAD MULTI-CURRENCY FOREX CARD (CARD NO: XXXX-XXXX-XXXX-4821)
+CARD STATEMENT - CAD MULTI-CURRENCY FOREX CARD (CARD NO: XXXX-XXXX-XXXX-0000)
 Statement Date: 26-AUG-2026
 
 Transactions:
@@ -266,7 +266,7 @@ Transactions:
       return;
     }
 
-    const applicableRate = targetWallet?.purchasedRateINR || 67.85;
+    const applicableRate = targetWallet?.purchasedRateINR || 0;
 
     const importedTransactions: Transaction[] = selectedItems.map((c) => {
       const inrAmount = calculateINR(c.amount, applicableRate);
@@ -298,7 +298,7 @@ Transactions:
   const totalSelectedForeign = candidates
     .filter((c) => c.selected)
     .reduce((sum, c) => sum + c.amount, 0);
-  const totalSelectedINR = totalSelectedForeign * (targetWallet?.purchasedRateINR || 67.85);
+  const totalSelectedINR = totalSelectedForeign * (targetWallet?.purchasedRateINR || 0);
 
   if (!isOpen) return null;
 
@@ -353,7 +353,7 @@ Transactions:
                   <div>
                     <span className="font-bold text-white">{targetWallet?.name || 'CAD Forex Card'}</span>
                     <span className="text-xs font-mono text-slate-400 ml-2 font-semibold">
-                      (CAD @ ₹{(targetWallet?.purchasedRateINR || 67.85).toFixed(2)})
+                      (CAD @ ₹{(targetWallet?.purchasedRateINR || 0).toFixed(2)})
                     </span>
                   </div>
                 </div>
