@@ -50,9 +50,7 @@ export default function App() {
 
   // View state
   const [activeTab, setActiveTab] = useState<'expenses' | 'analytics' | 'converter'>('expenses');
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return new Date().toISOString().slice(0, 7);
-  });
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
