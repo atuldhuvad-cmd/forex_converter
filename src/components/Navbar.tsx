@@ -23,6 +23,7 @@ interface NavbarProps {
   onInstallPWA: () => void;
   onOpenAddModal: () => void;
   onOpenPdfModal: () => void;
+  showPdfUpload: boolean;
   onOpenConverterModal: () => void;
   onOpenWalletsModal: () => void;
   onOpenSyncModal: () => void;
@@ -36,6 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onInstallPWA,
   onOpenAddModal,
   onOpenPdfModal,
+  showPdfUpload,
   onOpenConverterModal,
   onOpenWalletsModal,
   onOpenSyncModal,
@@ -163,15 +165,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <RefreshCw className="w-4 h-4" />
             </button>
 
-            {/* Dedicated Single Upload PDF Statement Button */}
-            <button
-              id="btn-upload-statement-header"
-              onClick={onOpenPdfModal}
-              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-blue-400 border border-blue-800/70 shadow-xs transition"
-            >
-              <FileUp className="w-4 h-4 text-blue-400" />
-              <span>Upload Card PDF</span>
-            </button>
+            {/* AI PDF parsing is omitted from the static-hosted build. */}
+            {showPdfUpload && (
+              <button
+                id="btn-upload-statement-header"
+                onClick={onOpenPdfModal}
+                className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-blue-400 border border-blue-800/70 shadow-xs transition"
+              >
+                <FileUp className="w-4 h-4 text-blue-400" />
+                <span>Upload Card PDF</span>
+              </button>
+            )}
 
             {/* Add Transaction Button */}
             <button

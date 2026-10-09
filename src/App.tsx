@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const isAiPdfEnabled = import.meta.env.VITE_ENABLE_AI_PDF !== 'false';
   // Primary persistent state
   const [wallets, setWallets] = useState<ForexWallet[]>(loadWallets);
   const [transactions, setTransactions] = useState<Transaction[]>(loadTransactions);
@@ -239,6 +240,7 @@ export default function App() {
           setIsAddModalOpen(true);
         }}
         onOpenPdfModal={() => setIsPdfModalOpen(true)}
+        showPdfUpload={isAiPdfEnabled}
         onOpenConverterModal={() => setActiveTab('converter')}
         onOpenWalletsModal={() => setIsWalletsModalOpen(true)}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
@@ -397,13 +399,15 @@ export default function App() {
         initialData={editingTransaction}
       />
 
-      <PdfStatementUploader
-        isOpen={isPdfModalOpen}
-        onClose={() => setIsPdfModalOpen(false)}
-        wallets={wallets}
-        onImportTransactions={handleImportBatchTransactions}
-        existingTransactions={transactions}
-      />
+      {isAiPdfEnabled && (
+        <PdfStatementUploader
+          isOpen={isPdfModalOpen}
+          onClose={() => setIsPdfModalOpen(false)}
+          wallets={wallets}
+          onImportTransactions={handleImportBatchTransactions}
+          existingTransactions={transactions}
+        />
+      )}
 
       <ForexWalletsModal
         isOpen={isWalletsModalOpen}

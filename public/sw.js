@@ -1,10 +1,9 @@
 // Service Worker for Forex Expense & Currency Converter PWA
-const CACHE_NAME = 'forex-tracker-cache-v3';
+const CACHE_NAME = 'forex-tracker-cache-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
   '/icon-192.svg',

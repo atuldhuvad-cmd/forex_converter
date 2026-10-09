@@ -3,9 +3,16 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
+  const isStaticBuild = mode === 'static';
   return {
     plugins: [react(), tailwindcss()],
+    define: {
+      'import.meta.env.VITE_ENABLE_AI_PDF': JSON.stringify(isStaticBuild ? 'false' : 'true'),
+    },
+    build: {
+      outDir: isStaticBuild ? 'dist-static' : 'dist',
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
