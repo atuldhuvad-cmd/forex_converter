@@ -159,10 +159,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-open-sync"
               onClick={onOpenSyncModal}
-              className="p-2 rounded-xl text-slate-300 bg-slate-900 hover:bg-slate-800 hover:text-white border border-slate-800 shadow-xs transition"
-              title="Desktop Sync, Backup & Restore"
+              className="p-2 rounded-xl text-slate-300 bg-slate-900 hover:bg-slate-800 hover:text-white border border-slate-800 shadow-xs transition flex items-center gap-1.5"
+              title="Backup & Restore - JSON backup, restore and CSV export"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline md:hidden lg:inline text-xs font-medium text-slate-300">Backup</span>
             </button>
 
             {/* AI PDF parsing is omitted from the static-hosted build. */}
@@ -190,40 +191,48 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Navigation Strip */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-slate-800 text-xs">
+        <div className="grid md:hidden grid-cols-5 gap-1 py-2 border-t border-slate-800 text-[10px]">
           <button
             onClick={() => setActiveTab('expenses')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
+            className={`px-1 py-1.5 rounded-lg font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
               activeTab === 'expenses' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <ReceiptText className="w-3.5 h-3.5" />
+            <ReceiptText className="w-4 h-4" />
             <span>Ledger</span>
           </button>
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
+            className={`px-1 py-1.5 rounded-lg font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
               activeTab === 'analytics' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <PieChart className="w-3.5 h-3.5" />
+            <PieChart className="w-4 h-4" />
             <span>Analytics</span>
           </button>
           <button
             onClick={() => setActiveTab('converter')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 ${
+            className={`px-1 py-1.5 rounded-lg font-semibold transition flex flex-col items-center justify-center gap-0.5 ${
               activeTab === 'converter' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Calculator className="w-3.5 h-3.5" />
+            <Calculator className="w-4 h-4" />
             <span>Converter</span>
           </button>
           <button
             onClick={onOpenWalletsModal}
-            className="px-2.5 py-1.5 rounded-lg font-semibold text-amber-300 bg-amber-950/60 border border-amber-800/80 flex items-center gap-1"
+            className="px-1 py-1.5 rounded-lg font-semibold text-amber-300 bg-amber-950/60 border border-amber-800/80 flex flex-col items-center justify-center gap-0.5"
           >
-            <Coins className="w-3.5 h-3.5" />
+            <Coins className="w-4 h-4" />
             <span>Rates</span>
+          </button>
+          <button
+            id="btn-open-sync-mobile"
+            onClick={onOpenSyncModal}
+            className="px-1 py-1.5 rounded-lg font-semibold text-emerald-300 bg-emerald-950/60 border border-emerald-800/80 flex flex-col items-center justify-center gap-0.5"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Backup</span>
           </button>
         </div>
       </div>
